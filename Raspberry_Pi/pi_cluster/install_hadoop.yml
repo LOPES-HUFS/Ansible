@@ -1,0 +1,42 @@
+---
+- hosts: all
+  user: all
+  tasks:
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        upgrade: "yes" # not: yes
+        update_cache: yes
+        cache_valid_time: 86400 #One day
+    - name: ensure openjdk-8-jdk is at the latest version
+      become: true
+      apt: name=openjdk-8-jdk state=latest
+    - name: download Hadoop in local
+      connection: local
+      shell: 'wget https://downloads.apache.org/hadoop/common/hadoop-3.2.1/hadoop-3.2.1.tar.gz'
+      ignore_errors: yes 
+    - name: Creates directory
+      become: true
+      file:
+        path: /opt/hadoop
+        state: directory      
+    - name: unzip Hadoop.tgz
+      become: true
+      shell: tar -xvf hadoop-3.2.1.tar.gz -C /opt/hadoop
+#    - name: del zip file
+#      become: true
+#        shell: rm -rf hadoop-3.2.1.tar.gz
+# 현재 chown를 앤서블 코드로 못 바꾸고 있음
+# 아래와 같이 경고가
+# [WARNING]: Consider using the file module with owner rather than running 'chown'.  If you need to use command because file is insufficient you can add 'warn: false' to this command task or set 'command_warnings=False' in ansible.cfg to get rid of this message.
+    - name:  chown hadoop
+      become: true
+      command: chown pi:pi -R /opt/hadoop
+# 설치가 끝났으면 리부팅합니다.
+      notify:
+      - Reboot the server
+# handlers 를 이용해 구형하는 경우 윗 chown spark를 실행되지 않으면
+# handlers 에 들어있는 리부팅이 실행되지 않습니다.
+  handlers:
+    - name: Reboot the server
+      command: sudo reboot
