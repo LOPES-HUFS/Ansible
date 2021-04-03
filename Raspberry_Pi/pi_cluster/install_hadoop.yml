@@ -23,9 +23,9 @@
     - name: unzip Hadoop.tgz
       become: true
       shell: tar -xvf hadoop-3.2.1.tar.gz -C /opt/hadoop
-    - name: del zip file
-      become: true
-        shell: rm -rf hadoop-3.2.1.tar.gz
+#    - name: del zip file
+#      become: true
+#        shell: rm -rf hadoop-3.2.1.tar.gz
 # 현재 chown를 앤서블 코드로 못 바꾸고 있음
 # 아래와 같이 경고가
 # [WARNING]: Consider using the file module with owner rather than running 'chown'.  If you need to use command because file is insufficient you can add 'warn: false' to this command task or set 'command_warnings=False' in ansible.cfg to get rid of this message.
