@@ -3,12 +3,12 @@
   user: all
   tasks:
     - name: rename hadoop
-      command: mv -v /opt/hadoop/hadoop-3.2.1 /opt/hadoop
+      command: sudo mv -v /opt/hadoop/hadoop-3.2.1 /opt/hadoop3
     - name: export env variable HADOOP_HOME
       lineinfile:
         dest: ~/.bashrc
         regexp: "HADOOP_HOME="
-        line: "export HADOOP_HOME=/opt/hadoop"
+        line: "export HADOOP_HOME=/opt/hadoop3"
     - name: export hadoop PATH
       lineinfile:
         dest: ~/.bashrc
@@ -18,7 +18,7 @@
       lineinfile:
         dest: ~/.bashrc
         regexp: "JAVA_HOME="
-        line: "export JAVA_HOME=$(readlink –f /usr/bin/java"
+        line: "export JAVA_HOME=$(readlink –f /usr/bin/java)"
     - name: export env variable HADOOP_COMMON_LIB
       lineinfile:
         dest: ~/.bashrc
@@ -37,5 +37,5 @@
     - name: source bashrc
       become: True
       command: source ~/.bashrc
-      arg:
+      args:
         executable: /bin/bash
