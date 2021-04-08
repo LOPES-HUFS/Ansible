@@ -11,10 +11,10 @@
     - name: ensure openjdk-8-jdk is at the latest version
       become: true
       apt: name=openjdk-8-jdk state=latest
-    - name: download Hadoop in local
-      connection: local
-      shell: 'wget https://downloads.apache.org/hadoop/common/hadoop-3.2.1/hadoop-3.2.1.tar.gz'
-      ignore_errors: yes 
+    - name: download hadoop
+      get_url:
+        url: https://downloads.apache.org/hadoop/common/hadoop-3.2.1/hadoop-3.2.1.tar.gz
+        dest: ~/hadoop-3.2.1.tar.gz
     - name: Creates directory
       become: true
       file:
