@@ -23,7 +23,6 @@
     - name: unzip Hadoop.tgz
       become: true
       shell: tar -xvf hadoop-3.2.1.tar.gz -C /opt/hadoop
-        shell: rm -rf hadoop-3.2.1.tar.gz
     - name:  chown hadoop
       become: true
       command: chown pi:pi -R /opt/hadoop
