@@ -2,10 +2,9 @@
 - hosts: all
   user: all
   tasks:
-  - name: rename hadoop
-    become: True
-    command: mv /opt/hadoop/hadoop-3.2.1 /opt/hadoop removes=/opt/hadoop/hadoop-3.2.1
-  tasks:
+    - name: rename hadoop
+      become: True
+      command: mv /opt/hadoop/hadoop-3.2.1 /opt/hadoop removes=/opt/hadoop/hadoop-3.2.1
     - name: export env variable HADOOP_HOME
       lineinfile:
         dest: ~/.bashrc
@@ -36,7 +35,6 @@
         dest: ~/.bashrc
         regexp: "HADOOP_OPTS="
         line: "export HADOOP_OPTS='-Djava.library.path=$HADOOP_HOME/lib/native'"
-  tasks:
     - name: source bashrc
       become: True
       command: source ~/.bashrc
