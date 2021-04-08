@@ -1,0 +1,38 @@
+---
+- hosts: all
+  user: all
+  tasks:
+  - name: rename hadoop
+      command: mv /opt/hadoop/hadoop-3.2.1 /opt/hadoop removes=/opt/hadoop/hadoop-3.2.1
+    - name: export env variable HADOOP_HOME
+      lineinfile:
+        dest: ~/.bashrc
+        regexp: "HADOOP_HOME="
+        line: "export HADOOP_HOME=/opt/hadoop"
+    - name: export hadoop PATH
+      lineinfile:
+        dest: ~/.bashrc
+        regexp: "PATH="
+        line: "export PATH=$PATH:$HADOOP_HOME/bin"
+    - name: export env variable JAVA_HOME
+      lineinfile:
+        dest: ~/.bashrc
+        regexp: "JAVA_HOME="
+        line: "export JAVA_HOME=$(readlink –f /usr/bin/java | sed "s:bin/java::"
+    - name: export env variable HADOOP_COMMON_LIB
+      lineinfile:
+        dest: ~/.bashrc
+        regexp: "HADOOP_COMMON_LIB_NATIVE_DIR="
+        line: "export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native"
+    - name: export env variable HADOOP_CONF_DIR
+      lineinfile:
+        dest: ~/.bashrc
+        regexp: "HADOOP_CONF_DIR="
+        line: "export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop"
+    - name: export env variable HADOOP_OPTS
+      lineinfile:
+        dest: ~/.bashrc
+        regexp: "HADOOP_OPTS="
+        line: "export HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native""
+    - name: source bashrc
+       command: source ~/.bashrc
