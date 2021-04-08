@@ -36,7 +36,7 @@
 <!-- Your inventory can specify information like IP address for each managed node. -->
 여러분의 인벤토리는 관리 노드를 위한 각각의 IP와 같은 정보를 기술할 수 있습니다.
 An inventory can also organize managed nodes, creating and nesting groups for easier scaling.
-인벤토리는 또한 관리 노드들을 
+인벤토리는 또한 관리 노드들을, 그룹을 마련하고 조직(organize)할 수 있다.
 <!-- To learn more about inventory, see the Working with Inventory section. -->
 인벤토리에 대하여 더 많이 알려면, 인벤토리로 일하기 절을 보세요.
 
