@@ -36,6 +36,6 @@
         line: "export HADOOP_OPTS='-Djava.library.path=$HADOOP_HOME/lib/native'"
     - name: source bashrc
       become: True
-      command: source ~/.bashrc
+      shell: source ~/.bashrc
       args:
         executable: /bin/bash
