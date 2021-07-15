@@ -54,12 +54,13 @@ An inventory can also organize managed nodes, creating and nesting groups for ea
 <!-- The units of code Ansible executes. -->
 앤서블 코드 수행 단위
 Each module has a particular use, from administering users on a specific type of database to managing VLAN interfaces on a specific type of network device.
-각각의 모듈은 
+각 모듈은 특정 유형의 데이터베이스에서 사용자를 관리하는(administering) 것부터 특정 유형의 네트워크 장치(device)에서 VLAN 인터페이스를 관리하는(managing) 것에 이르기까지 특정 용도를 가지고 있습니다.
 You can invoke a single module with a task, or invoke several different modules in a playbook.
-여러분은 모듈 하나로 과제 하나를 갖는 
+여러분은 과제 하나를 가지고 모둘 하나를 호출하거나(invoke), 또는 하나의 각본(playbook)안에서 여러 다른 모듈들을 호출할 수 있습니다.
 <!-- Starting in Ansible 2.10, modules are grouped in collections. -->
 앤서블 2.10부터, 모듈들은 컬렉션들 안에 모여있게 된다.
 For an idea of how many collections Ansible includes, take a look at the Collection Index.
+Ansible에 포함된 수많은 컬렉션에 대한 아이디어는, Collection Index를 살펴보십시오.
 
 ## 과제(Task)s
 
