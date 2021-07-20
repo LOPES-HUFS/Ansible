@@ -18,7 +18,7 @@ raspberrypi.local | SUCCESS => {
 }
 ```
 
-위에서 조금 번잡하게 쓴 코드를 조금 있어 보이게 작성해 봅시다. 우선 현재 폴더에 `hosts`라는 이름을 가진 파일을 만들어서 다음과 같은 내용을 추가합니다. 마지막에 빈 줄을 넣는 것이 좋습니다.
+앞의 코드는 한 줄에 호스트 이름(raspberrypi.local)과 ansible 파이썬 설정(ansible_python_interpreter)같은 것들이 한 줄에 다 들어 있습니다. 조금 번잡하고 한 번에 쓰기에는 무리가 있습니다. 윗 코드를 조금 있어 보이게 작성해 봅시다. 우선 현재 폴더에 `hosts`라는 이름을 가진 파일을 만들어서 다음과 같은 내용을 넣은 다음 저장합니다. 마지막에 빈 줄을 넣는 것이 좋습니다.
 
 ```bash
 [all]
@@ -29,7 +29,7 @@ ansible_python_interpreter=/usr/bin/python3
 
 ```
 
-짐작은 하시겠지만, 명령어에서 쓴 내용들을 파일에 적은 것입니다. 이런 파일을 앤서블에서는 inventory(이하 인벤토리)라고 합니다. 앞에 쓴 내용을 가지고 앞의 명령어를 줄여서 아래와 같이 해봅시다. `-k`는 `--ask-pass`을, `-u`는 `--user`을, `-i`는 `--inventory`을 줄인 것입니다. 앞의 것보다 아주 깔끔합니다. 앞에서 이야기를 안 했지만, `-m`은 `--module-name`을 줄인 것으로 뒤에 나오는 모듈을 사용하라는 옵션인데 여기서는 `ping`이라는 모듈을 사용하고 있습니다.
+짐작은 하시겠지만, 명령어에서 쓴 내용들을 `hosts`이라는 파일에 적은 것입니다. 이런 파일을 앤서블에서는 inventory(이하 인벤토리)라고 합니다. 앞에 쓴 내용을 가지고 앞의 명령어를 줄여서 아래와 같이 해봅시다. `-k`는 `--ask-pass`을, `-u`는 `--user`을, `-i`는 `--inventory`을 줄인 것입니다. 앞의 명령어보다 아주 깔끔합니다. 앞에서 이야기를 안 했지만, `-m`은 `--module-name`을 줄인 것으로 뒤에 나오는 모듈을 사용하라는 옵션인데 여기서는 `ping`이라는 모듈을 사용하고 있습니다.
 
 ```bash
 # PW: raspberry
@@ -47,7 +47,7 @@ raspberrypi.local | SUCCESS => {
 }
 ```
 
-앞에서는 `ping`이라는 모듈을 사용했지만, 아래와 같이 하면 현재 `raspberrypi.local`에 설치되어 있는 명령어도 사욜할 수 있습니다.
+앞에서는 `ping`이라는 모듈을 사용했지만, 아래와 같이 하면 현재 `raspberrypi.local`에 설치되어 있는 명령어도 사용할 수 있습니다.
 
 ```bash
 # PW: raspberry
@@ -183,3 +183,112 @@ lopes.hufs.ac.kr | SUCCESS => {
 ```
 
 어짜피 `SSH password:` 비번을 치는 것이나, `Vault password:` 비번을 치는 것이 매한가지 일이 아니냐고 반문하실 수도 있습니다. 그러나 `ansible-vault`를 사용하면 많은 것을 암호화할 수 있으며, 단 한 번의 입력으로 많은 내용을 처리할 수 있으며, 만약 파일이 유츌되어도 엔서블을 이용하여 관리하고 있는 서버에 대한 보안 문제에 대해서도 어느 정도 안심할 수 있습니다.
+
+앞에서는 파일 내용 전체를 모두 암호화했습니다. 앞에서는 `encrypt_hosts` 파일에 다음과 같은 내용을 입력하고 모든 내용을 암호화했습니다. 그 결과 `cat encrypt_hosts`과 같은 명령어로 파일 내용을 보면, 내용이 복잡한 숫자로 암호화된 것을 알 수 있습니다.
+
+```bash
+[all]
+raspberrypi.local
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=pi
+ansible_ssh_pass=raspberry
+
+```
+
+그러나 모든 내용을 모두 암호화하지 않고, SSH 비밀번호(ansible_ssh_pass)인 `raspberry`만 암호화할 수도 있습니다. 이 경우 모든 파일의 내용은 평문으로 다 볼 수 있으며, `ansible_ssh_pass` 부분만 암호화했기 때문에 우슨 내용인지 알 수 없게 됩니다. 암호화하는 방법은 쉽습니다. 암호화하려고 하는 문장인 `raspberry`을 다음과 같이 암호화 하면 됩니다.
+
+```bash
+ansible-vault encrypt_string raspberry --ask-vault-pass
+```
+
+작동 과정은 다음과 같습니다. 앞와 동일하게 전 `New Vault password`으로 `1234`을 입력했습니다.
+
+```bash
+❯ ansible-vault encrypt_string three.local --ask-vault-pass
+
+New Vault password: 
+Confirm New Vault password: 
+!vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          61363335623536613232306661306163643832616433636262653962336239613837396664353561
+          3433663336326239333664636238303833303064373734370a306262366662613534653539346531
+          66666262343363306530326531393766306265313736663066356463356633616334343239626365
+          3138653639646635640a386431316138653538353163623530353533356361323764623462666230
+          6131
+Encryption successful
+```
+
+윗내용을 파일에 적용하면 됩니다. 이렇게 특정 부분만 암호화해서 사용하려면 파일 내용을 `yaml` 형식으로 변환하셔야 합니다. 그런 다음 앞에서 암호화 내용을 아래와 같이 붙여넣기하시면 됩니다. 여기서는 `encrypted_variable_hosts.yaml`이라는 파일을 만든 다음 다음과 같은 내용을 저장했습니다.
+
+```yaml
+all:
+  hosts: raspberrypi.local
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_user: pi
+    ansible_ssh_pass: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          61363335623536613232306661306163643832616433636262653962336239613837396664353561
+          3433663336326239333664636238303833303064373734370a306262366662613534653539346531
+          66666262343363306530326531393766306265313736663066356463356633616334343239626365
+          3138653639646635640a386431316138653538353163623530353533356361323764623462666230
+          6131
+```
+
+이 파일 내용을 `cat`을 이용해 보면, `ansible_ssh_pass`만 암호화된 것을 확인하실 수 있습니다.
+
+```bash
+❯ cat encrypted_variable_hosts.yaml
+all:
+  hosts: raspberrypi.local
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_user: pi
+    ansible_ssh_pass: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          61363335623536613232306661306163643832616433636262653962336239613837396664353561
+          3433663336326239333664636238303833303064373734370a306262366662613534653539346531
+          66666262343363306530326531393766306265313736663066356463356633616334343239626365
+          3138653639646635640a386431316138653538353163623530353533356361323764623462666230
+          6131
+```
+
+새로 만든 `ansible_ssh_pass`만 암호화한 파일을 이용해봅시다. 앞에서 한 것과 파일명만 달라졌습니다.
+
+```bash
+ansible all -m ping --ask-vault-password -i encrypted_variable_hosts.yaml
+```
+
+`Vault password:`에서 앞에서 `raspberry`을 암호화할 때 사용한 `1234`을 입력하면 앞에서 한 것과 정확하게 똑같이 작동합니다. 단지 파일 형식만 바뀐 것입니다.
+
+```bast
+❯ ansible all -m ping --ask-vault-password -i encrypted_variable_hosts.yaml
+Vault password: 
+raspberrypi.local | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+```
+
+다음 것도 앞과 똑같이 잘 작동합니다.
+
+```bash
+❯ ansible all -a 'df -h' --ask-vault-password -i encrypted_variable_hosts.yaml
+Vault password: 
+raspberrypi.local | CHANGED | rc=0 >>
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       117G  1.3G  111G   2% /
+devtmpfs        430M     0  430M   0% /dev
+tmpfs           463M     0  463M   0% /dev/shm
+tmpfs           463M   12M  451M   3% /run
+tmpfs           5.0M  4.0K  5.0M   1% /run/lock
+tmpfs           463M     0  463M   0% /sys/fs/cgroup
+/dev/mmcblk0p1  253M   49M  204M  20% /boot
+tmpfs            93M     0   93M   0% /run/user/1000
+```
+
+인벤토리와 `yaml` 형식에 관한 내용은 다음 링크를 참고하세요.
+
+- [How to build your inventory — Ansible Documentation](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)
