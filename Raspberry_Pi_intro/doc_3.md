@@ -5,15 +5,33 @@
 - [라즈베리파이를 이용한 Ansible 기초](https://github.com/LOPES-HUFS/Ansible/blob/main/Raspberry_Pi_intro/doc_1.md)
 - [라즈베리파이를 이용한 앤서블의 본격적인 기초](https://github.com/LOPES-HUFS/Ansible/blob/main/Raspberry_Pi_intro/doc_2.md)
 
-앞 글에서 각종 내용이 들어 있는 인벤토리 파일을 암호화해서 앤서블 `ping`을 해봤습니다.
+앞 글, [라즈베리파이를 이용한 앤서블의 본격적인 기초](https://github.com/LOPES-HUFS/Ansible/blob/main/Raspberry_Pi_intro/doc_2.md)에서 특정 부분(패스워드)만 암화화해서 앤서블의 `hello world!`인 `ping`을 해봤습니다.
 
 ```bash
-❯ ansible all -m ping --ask-vault-password -i encrypt_hosts
+❯ ansible all -m ping --ask-vault-password -i encrypted_variable_hosts.yaml
 Vault password: 
 lopes.hufs.ac.kr | SUCCESS => {
     "changed": false,
     "ping": "pong"
 }
+```
+
+그리고 `df -h`이라는 명령어도 암호화된 파일을 이용해서 실행해봤습니다.
+
+```bash
+#PW: raspberry
+❯ ansible all -a 'df -h' --ask-vault-password -i encrypted_variable_hosts.yaml
+Vault password: 
+raspberrypi.local | CHANGED | rc=0 >>
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       117G  1.3G  111G   2% /
+devtmpfs        430M     0  430M   0% /dev
+tmpfs           463M     0  463M   0% /dev/shm
+tmpfs           463M   12M  451M   3% /run
+tmpfs           5.0M  4.0K  5.0M   1% /run/lock
+tmpfs           463M     0  463M   0% /sys/fs/cgroup
+/dev/mmcblk0p1  253M   49M  204M  20% /boot
+tmpfs            93M     0   93M   0% /run/user/1000
 ```
 
 이번에는 `ansible-playbook`을 이용하여 우리가 따로 따로 실행했던, `ping`과 `df -h`를 한꺼번에 처리해보겠습니다. `ping_and_df.yml`라는 이름을 가진 파일을 만들어서, 다음과 같이 입력합니다.
@@ -30,7 +48,7 @@ lopes.hufs.ac.kr | SUCCESS => {
     - debug: var=df_meg["stdout_lines"]
 ```
 
-이것을 실행하라면 다음과 같이 하시면 됩니다. 물론 암호화된 인벤토리 파일인 `encrypt_hosts`도 가능합니다.
+이것을 실행하려면 다음과 같이 하시면 됩니다.
 
 ```bash
 ansible-playbook ping_and_df.yml -i new_hosts
@@ -71,6 +89,49 @@ PLAY RECAP *********************************************************************
 raspberrypi.local          : ok=4    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
 
+물론 암호화된 인벤토리 파일인 `encrypted_variable_hosts.yaml`을 가지고도 실행 할 수 있습니다.
+
+```bash
+ansible-playbook ping_and_df.yml --ask-vault-password -i encrypted_variable_hosts.yaml
+```
+
+실행과정은 다음과 같습니다.
+
+```bash
+#PW: raspberry
+❯ ansible-playbook ping_and_df.yml --ask-vault-password -i encrypted_variable_hosts.yaml
+Vault password: 
+
+PLAY [all] ***********************************************************************************************************************************
+
+TASK [Gathering Facts] ***********************************************************************************************************************
+ok: [raspberrypi.local]
+
+TASK [Ping all hosts] ************************************************************************************************************************
+ok: [raspberrypi.local]
+
+TASK [Let's see how much disk is left.] ******************************************************************************************************
+changed: [raspberrypi.local]
+
+TASK [debug] *********************************************************************************************************************************
+ok: [raspberrypi.local] => {
+    "login[\"stdout_lines\"]": [
+        "Filesystem      Size  Used Avail Use% Mounted on",
+        "/dev/root       117G  1.3G  111G   2% /",
+        "devtmpfs        430M     0  430M   0% /dev",
+        "tmpfs           463M     0  463M   0% /dev/shm",
+        "tmpfs           463M  6.2M  456M   2% /run",
+        "tmpfs           5.0M  4.0K  5.0M   1% /run/lock",
+        "tmpfs           463M     0  463M   0% /sys/fs/cgroup",
+        "/dev/mmcblk0p1  253M   49M  204M  20% /boot",
+        "tmpfs            93M     0   93M   0% /run/user/1000"
+    ]
+}
+
+PLAY RECAP ***********************************************************************************************************************************
+raspberrypi.local          : ok=4    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+```
+
 `ansible-playbook`을 이용하면 위와 같이 한꺼번에 두 가지 과제를 처리할 수 있게 됩니다. 우리가 서버에 들어가서 일일히 변경하는 것이 아니라 서버에서 할 과제를 쭉 적은 다음 그것을 순서대로 각본대로 쭉 실행되는 것이죠. 아주 단순하게 설명하자면, `ping_and_df.yml`이라는 각본에, `tasks`에서 첫번째 줄 `name`은 과제 이름을 말하는 것이고 두 번째 줄인 `shell`과 `ping`은 그 과제에서 할 것을 쓴 것입니다. 물론 정확하게 설명하자면 더 복잡하게 설명해야 합니다.
 
 이제 마지막으로 실전에서 사용할 만한 것을 해보겠습니다. 모든 패키지를 업데이트하고 업그래이드한 다음, nginx(이하 엔진엑스) 웹서버를 설치하고, 이를 작동해 보겠습니다. `nginx.yml`라는 이름을 가진 파일을 만들어서, 다음과 같이 입력합니다.
@@ -96,12 +157,21 @@ raspberrypi.local          : ok=4    changed=1    unreachable=0    failed=0    s
 
 ```
 
-이렇게 입력한 것을 실행해보겠습니다. 아래와 같이 실행됩니다.
+이렇게 입력한 것을 실행해보겠습니다.
 
 ```bash
-❯ ansible-playbook nginx.yml -i new_hosts
+ansible-playbook nginx.yml --ask-vault-password -i encrypted_variable_hosts.yaml
+```
 
-PLAY [all] ****************************************************************************************************************************************************
+아래와 같이 실행됩니다.
+
+```bash
+#PW: raspberry
+❯ ansible-playbook nginx.yml --ask-vault-password -i encrypted_variable_hosts.yaml
+Vault password: 
+
+PLAY [all] ***********************************************************************************************************************************
+****************************************************************************************************************************************************
 
 TASK [Gathering Facts] ****************************************************************************************************************************************
 ok: [raspberrypi.local]
@@ -121,7 +191,7 @@ raspberrypi.local          : ok=4    changed=1    unreachable=0    failed=0    s
 
 라즈베리파이에 설치된 엔진엑스가 잘 작동하는지 살펴보려면 아래와 같이 현재 라즈베리파이 IP를 웹브라우저 주소창에 입력하시면 됩니다. 뭐 `Welcome to nginx!`가 제목으로 나오는 페이지가 나온다면 잘 설치된 것입니다. 참고로 `become: true`은 `sudo`라고 생각하시면 됩니다. 물론 정확한 설명은 아닙니다.
 
-[http://192.168.0.16](http://192.168.0.16)
+[http://raspberrypi.local](hhttp://raspberrypi.local)
 
 워 이렇게 번잡하게 설치하는지 궁굼하실 수도 있겠지만, 서버 1개에 설치하는 것은 그리 어렵지 않지만, 같은 것을 서버 여러 대에 설치하고자 한다면, 이와 같이 엔서블을 이용하는 것이 훨씬 더 효과적입니다. 그리고 한 번 잘 돌아간 엔서블 코드는 오타도 없는 코드이니, 직접 터미널에서 작업할 때 오타의 위험에서도 벗어나실 수 있습니다.
 
