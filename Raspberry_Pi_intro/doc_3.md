@@ -1,4 +1,4 @@
-# 라즈베리파이을 이용한 Ansible 고급 기초
+# 라즈베리파이을 이용한 앤서블(Ansible) 고급 기초
 
 이제 마지막 기초입니다. 앞선 글은 다음과 같습니다.
 
@@ -19,7 +19,7 @@ lopes.hufs.ac.kr | SUCCESS => {
 그리고 `df -h`이라는 명령어도 암호화된 파일을 이용해서 실행해봤습니다.
 
 ```bash
-#PW: raspberry
+#PW: 1234
 ❯ ansible all -a 'df -h' --ask-vault-password -i encrypted_variable_hosts.yaml
 Vault password: 
 raspberrypi.local | CHANGED | rc=0 >>
@@ -95,10 +95,10 @@ raspberrypi.local          : ok=4    changed=1    unreachable=0    failed=0    s
 ansible-playbook ping_and_df.yml --ask-vault-password -i encrypted_variable_hosts.yaml
 ```
 
-실행과정은 다음과 같습니다.
+실행 과정은 다음과 같습니다.
 
 ```bash
-#PW: raspberry
+#PW: 1234
 ❯ ansible-playbook ping_and_df.yml --ask-vault-password -i encrypted_variable_hosts.yaml
 Vault password: 
 
@@ -134,6 +134,8 @@ raspberrypi.local          : ok=4    changed=1    unreachable=0    failed=0    s
 
 `ansible-playbook`을 이용하면 위와 같이 한꺼번에 두 가지 과제를 처리할 수 있게 됩니다. 우리가 서버에 들어가서 일일히 변경하는 것이 아니라 서버에서 할 과제를 쭉 적은 다음 그것을 순서대로 각본대로 쭉 실행되는 것이죠. 아주 단순하게 설명하자면, `ping_and_df.yml`이라는 각본에, `tasks`에서 첫번째 줄 `name`은 과제 이름을 말하는 것이고 두 번째 줄인 `shell`과 `ping`은 그 과제에서 할 것을 쓴 것입니다. 물론 정확하게 설명하자면 더 복잡하게 설명해야 합니다.
 
+## 앤서블(Ansible)을 이용하여 라즈베리파이에 nginx 설치하기
+
 이제 마지막으로 실전에서 사용할 만한 것을 해보겠습니다. 모든 패키지를 업데이트하고 업그래이드한 다음, nginx(이하 엔진엑스) 웹서버를 설치하고, 이를 작동해 보겠습니다. `nginx.yml`라는 이름을 가진 파일을 만들어서, 다음과 같이 입력합니다.
 
 ```yaml
@@ -157,16 +159,16 @@ raspberrypi.local          : ok=4    changed=1    unreachable=0    failed=0    s
 
 ```
 
-이렇게 입력한 것을 실행해보겠습니다.
+이렇게 입력한 것은 다음과 같이 실행할 수 있습니다.
 
 ```bash
 ansible-playbook nginx.yml --ask-vault-password -i encrypted_variable_hosts.yaml
 ```
 
-아래와 같이 실행됩니다.
+실행 과정은 다음과 같습니다.
 
 ```bash
-#PW: raspberry
+#PW: 1234
 ❯ ansible-playbook nginx.yml --ask-vault-password -i encrypted_variable_hosts.yaml
 Vault password: 
 
@@ -195,13 +197,15 @@ raspberrypi.local          : ok=4    changed=1    unreachable=0    failed=0    s
 
 워 이렇게 번잡하게 설치하는지 궁굼하실 수도 있겠지만, 서버 1개에 설치하는 것은 그리 어렵지 않지만, 같은 것을 서버 여러 대에 설치하고자 한다면, 이와 같이 엔서블을 이용하는 것이 훨씬 더 효과적입니다. 그리고 한 번 잘 돌아간 엔서블 코드는 오타도 없는 코드이니, 직접 터미널에서 작업할 때 오타의 위험에서도 벗어나실 수 있습니다.
 
-진짜 마지막으로 현재 관리하고 있는 라즈베리파이 서버로 파일을 복사해 보겠습니다. 하둡 파일을 다운받아 보내겠습니다. 우선 파일을 다운받겠습니다.
+## 앤서블(Ansible)을 이용하여 라즈베리파이에 파일 다운받기
+
+진짜 마지막으로 현재 관리하고 있는 라즈베리파이 서버로 파일을 복사해 보겠습니다. 하둡 파일을 다운받아 보내겠습니다. 우선 현재 앤서블(Ansible)를 실행하고 있는 컴퓨터에 파일을 다운받겠습니다.
 
 ```bash
 wget https://downloads.apache.org/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz
 ```
 
-자 앞에서 받은 파일을 서버로 복사해 보겠습니다.
+자 앞에서 받은 파일을 라즈베리파이로 복사해 보겠습니다.
 
 ```bash
 ansible all -m copy -a "src=hadoop-3.2.2.tar.gz  dest=~/" -i new_hosts
@@ -259,10 +263,12 @@ PLAY RECAP *********************************************************************
 raspberrypi.local          : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 ```
 
-서버에 들어가보니 잘 복사되어 있습니다!
+엔서블을 이용해서 라즈베리파이 서버에 잘 복사되어 있는지 확인해보니, 잘 작동한 것 같습니다.
 
 ```bash
-pi@raspberrypi:~ $ ls -ls
+❯ ansible all -a 'ls -l' --ask-vault-password -i encrypted_variable_hosts.yaml 
+Vault password: 
+raspberrypi.local | CHANGED | rc=0 >>
 total 386188
-386188 -rw-r--r-- 1 pi pi 395448622 Mar 18 09:28 hadoop-3.2.2.tar.gz
+-rw-r--r-- 1 pi pi 395448622 Jul 21 17:13 hadoop-3.2.2.tar.gz
 ```
