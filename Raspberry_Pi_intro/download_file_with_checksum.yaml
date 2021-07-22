@@ -1,0 +1,9 @@
+---
+- hosts: all
+  remote_user: root
+  tasks:
+  - name: Download file with checksum url (sha512)
+    get_url:
+      url: https://downloads.apache.org/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz
+      dest: ~/hadoop-3.2.2.tar.gz
+      checksum: sha512:https://downloads.apache.org/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz.sha512

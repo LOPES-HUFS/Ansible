@@ -272,3 +272,75 @@ raspberrypi.local | CHANGED | rc=0 >>
 total 386188
 -rw-r--r-- 1 pi pi 395448622 Jul 21 17:13 hadoop-3.2.2.tar.gz
 ```
+
+앞에서는 현재 앤서블(Ansible)를 실행하고 있는 컴퓨터에 파일을 다운받은 다음 이것을 라즈베리파이 서버로 복사했습니다. 이번에는 직접 라즈베리파이 서버로 다운받아보겠습니다. 그러면서 다운받은 파일이 해킹된 것인지 아닌지 `sha256`파일을 이용하여 체크도 해보겠습니다.
+
+우선 라즈베리파이 서버에서 다운받은 파일을 지웁니다. 아래에서 `[WARNING]`가 뜨는 것은 `rm`을 이용해서 직접 지우는 것보다, `file module`을 사용하는 것이 좋으니 그것을 사용하라고 하는 것입니다. 이건 연습을 위한 것이니 `rm`을 이용해서 직접 지웠습니다.
+
+```bash
+❯ ansible all -a 'rm hadoop-3.2.2.tar.gz' --ask-vault-password -i encrypted_variable_hosts.yaml 
+Vault password: 
+[WARNING]: Consider using the file module with state=absent rather than running 'rm'.  If you need to use command because file is
+insufficient you can add 'warn: false' to this command task or set 'command_warnings=False' in ansible.cfg to get rid of this message.
+raspberrypi.local | CHANGED | rc=0 >>
+```
+
+지워진 것을 다음과 같이 확인할 수 있습니다.
+
+```bash
+❯ ansible all -a 'ls -l' --ask-vault-password -i encrypted_variable_hosts.yaml 
+Vault password: 
+raspberrypi.local | CHANGED | rc=0 >>
+total 0
+```
+
+`download_file_with_checksum.yaml`라는 이름을 가진 파일을 만들어서, 다음과 같이 입력합니다. 여기서 `url`은 다운받을 파일 주소, `dest`다운받을 장소, `checksum`은 문제가 없는 파일인지 검사할 때 사용할 파일이 있는 주소입니다. 좀 더 자세한 내용은 아래 링크를 참고하세요.
+
+- [ansible.builtin.get_url – Downloads files from HTTP, HTTPS, or FTP to node — Ansible Documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/get_url_module.html)ng
+
+```yaml
+---
+- hosts: all
+  remote_user: root
+  tasks:
+  - name: Download file with checksum url (sha512)
+    get_url:
+      url: https://downloads.apache.org/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz
+      dest: ~/hadoop-3.2.2.tar.gz
+      checksum: sha512:https://downloads.apache.org/hadoop/common/hadoop-3.2.2/hadoop-3.2.2.tar.gz.sha512
+
+```
+
+앞에서 만든 파일을 다음 명령어로 실행합니다.
+
+```bash
+ansible-playbook download_file_with_checksum.yaml --ask-vault-password -i encrypted_variable_hosts.yaml
+```
+
+으로 실행합니다. 결과는 다음과 같습니다.
+
+```bash
+❯ ansible-playbook download_file_with_checksum.yaml --ask-vault-password -i encrypted_variable_hosts.yaml
+Vault password: 
+
+PLAY [all] ***********************************************************************************************************************************
+
+TASK [Gathering Facts] ***********************************************************************************************************************
+ok: [raspberrypi.local]
+
+TASK [Download file with checksum url (sha512)] **********************************************************************************************
+changed: [raspberrypi.local]
+
+PLAY RECAP ***********************************************************************************************************************************
+raspberrypi.local          : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+```
+
+라즈베리파이에 파일이 다음과 같이 잘 들어온 것을 확인할 수 있습니다. 물론 해킹당하지 않은 것도 확인한 것이구요.
+
+```bash
+❯ ansible all -a 'ls -l' --ask-vault-password -i encrypted_variable_hosts.yaml
+Vault password: 
+raspberrypi.local | CHANGED | rc=0 >>
+total 386188
+-rw-r--r-- 1 pi pi 395448622 Jul 22 15:13 hadoop-3.2.2.tar.gz
+```
