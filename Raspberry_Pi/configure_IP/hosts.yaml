@@ -1,0 +1,12 @@
+all:
+  hosts:
+    one:
+      ansible_host: one.local
+    two:
+      ansible_host: two.local
+    three:
+      ansible_host: three.local
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_user: pi
+    ansible_ssh_pass: raspberry
