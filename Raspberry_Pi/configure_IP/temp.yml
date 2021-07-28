@@ -1,0 +1,17 @@
+---
+- hosts: all
+  user: all
+  vars:
+    Gateway: " {{hostvars[inventory_hostname]['ansible_default_ipv4']['gateway']}}"
+    IP_address: "{{ansible_default_ipv4.address}}"
+    ip_address: "{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
+  tasks:
+    - name: 현재 IP_address 정보
+      ansible.builtin.debug:
+        msg: "msg: System {{ inventory_hostname }} has gateway {{ IP_address }}"
+    - name: 현재 gateway 정보
+      ansible.builtin.debug:
+        msg: "msg: System {{ inventory_hostname }} has gateway {{ ip_address }}"
+    - name: 현재 gateway 정보
+      ansible.builtin.debug:
+        msg: "msg: System {{ inventory_hostname }} has gateway {{ Gateway }}"
