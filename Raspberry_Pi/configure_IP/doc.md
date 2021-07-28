@@ -212,10 +212,174 @@ PLAY RECAP *********************************************************************
 raspberrypi                : ok=4    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 ```
 
+그러면 이제 `raspberrypi.local` 서버를 정적 ip로 바꿔보겠습니다. 앞에서 말한 것처럼 `/etc/dhcpcd.conf` 파일을 변경하면 됩니다. 아래 코드 내용은 조금 복잡하지만, 아래 링크를 참고해서 작성했으니, 링크를 보시고 그리 어렵지 않게 이해하실 수 있습니다.
 
-## 라즈베리 서버 3개를 동시에 바꾸기
+- [[Ansible] 설정파일 라인 변경](https://sh-safer.tistory.com/127)
+- [ansible-pi-lockdown/main.yml at master · vicchi/ansible-pi-lockdown](https://github.com/vicchi/ansible-pi-lockdown/blob/master/roles/static-ip/tasks/main.yml)
 
-자, 이제 라즈베리 서버 3개에 os를 잘 설치했으면, 연결이 잘 되는지 테스트 해봅시다.
+아래 코드를 `change_static_IP.yml`이라는 파일을 만들고 저장합니다. 이 코드는 현재 `raspberrypi.local` 서버가 사용하고 있는 
+
+```yaml
+---
+- hosts: all
+  user: all
+  vars:
+    interface: "eth0"
+    ipaddress: "{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
+    gateway: " {{hostvars[inventory_hostname]['ansible_default_ipv4']['gateway']}}"
+    dns_servers: "8.8.8.8"
+  tasks:
+    - name: Configure static IP in  /etc/dhcpcd.conf
+      become: yes
+      lineinfile:
+        dest:  /etc/dhcpcd.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      with_items:
+        - { regexp: "^interface eth[0-9]$", line: "interface {{ interface }}" }
+        - { regexp: "^static ip_address", line: "static ip_address={{ ipaddress }}/24" }
+        - { regexp: "^static routers", line: "static routers={{ gateway }}" }
+        - { regexp: "^static domain_name_servers", line: "static domain_name_servers={{ gateway }}, {{ dns_servers }}" }
+
+```
+
+이제 `raspberrypi.local` 서버를 고정 IP로 바꿔보겠습니다. 다음과 같이 입력하면 됩니다.
+
+```bash
+ansible-playbook change_static_IP.yml -i host.yml
+```
+
+결과는 다음과 같습니다.
+
+```bash
+❯ ansible-playbook change_static_IP.yml -i host.yml
+
+
+PLAY [all] ***********************************************************************************************************************************
+
+TASK [Gathering Facts] ***********************************************************************************************************************
+ok: [raspberrypi]
+
+TASK [Configure static IP in  /etc/dhcpcd.conf] **********************************************************************************************
+changed: [raspberrypi] => (item={'regexp': '^interface eth[0-9]$', 'line': 'interface eth0'})
+changed: [raspberrypi] => (item={'regexp': '^static ip_address', 'line': 'static ip_address=192.168.2.48/24'})
+changed: [raspberrypi] => (item={'regexp': '^static routers', 'line': 'static routers= 192.168.2.1'})
+changed: [raspberrypi] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.2.1, 8.8.8.8'})
+
+PLAY RECAP ***********************************************************************************************************************************
+raspberrypi                : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+```
+
+만약 한 번이상 실행하시면 `changed` 숫자가 변경됩니다. 그러면 서버를 리부팅합니다.
+
+```bash
+ansible all -a 'sudo shutdown -r now' -i host.yml
+```
+
+서버가 리부팅한 다음 서버에 다음과 같이 `ping`을 하면 잘 작동하고 있는 것을 확인하실 수 있습니다.
+
+```bash
+❯ ansible all -m ping -i host.yml
+raspberrypi | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+```
+
+`ssh`로 다음과 같이 접속합니다. 비밀번호(password)는 `raspberry`으로 앞에서 설정했었습니다. `hostname -I`와 `cat /etc/dhcpcd.conf`으로 지금까지 한 작업을 확인해봅니다. 잘 된 것 같습니다.
+
+```bash
+❯ ssh pi@raspberrypi.local
+pi@raspberrypi.local's password: 
+Linux raspberrypi 5.10.17-v7+ #1414 SMP Fri Apr 30 13:18:35 BST 2021 armv7l
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Wed Jul 28 17:03:43 2021 from fe80::10cc:9f8e:de02:8f54%eth0
+
+SSH is enabled and the default password for the 'pi' user has not been changed.
+This is a security risk - please login as the 'pi' user and type 'passwd' to set a new password.
+
+
+Wi-Fi is currently blocked by rfkill.
+Use raspi-config to set the country before use.
+
+pi@raspberrypi:~ $ hostname -I
+192.168.2.48
+pi@raspberrypi:~ $ cat /etc/dhcpcd.conf
+# A sample configuration for dhcpcd.
+# See dhcpcd.conf(5) for details.
+
+# Allow users of this group to interact with dhcpcd via the control socket.
+#controlgroup wheel
+
+# Inform the DHCP server of our hostname for DDNS.
+hostname
+
+# Use the hardware address of the interface for the Client ID.
+clientid
+# or
+# Use the same DUID + IAID as set in DHCPv6 for DHCPv4 ClientID as per RFC4361.
+# Some non-RFC compliant DHCP servers do not reply with this set.
+# In this case, comment out duid and enable clientid above.
+#duid
+
+# Persist interface configuration when dhcpcd exits.
+persistent
+
+# Rapid commit support.
+# Safe to enable by default because it requires the equivalent option set
+# on the server to actually work.
+option rapid_commit
+
+# A list of options to request from the DHCP server.
+option domain_name_servers, domain_name, domain_search, host_name
+option classless_static_routes
+# Respect the network MTU. This is applied to DHCP routes.
+option interface_mtu
+
+# Most distributions have NTP support.
+#option ntp_servers
+
+# A ServerID is required by RFC2131.
+require dhcp_server_identifier
+
+# Generate SLAAC address using the Hardware Address of the interface
+#slaac hwaddr
+# OR generate Stable Private IPv6 Addresses based from the DUID
+slaac private
+
+# Example static IP configuration:
+#interface eth0
+#static ip_address=192.168.0.10/24
+#static ip6_address=fd51:42f8:caae:d92e::ff/64
+#static routers=192.168.0.1
+#static domain_name_servers=192.168.0.1 8.8.8.8 fd51:42f8:caae:d92e::1
+
+# It is possible to fall back to a static IP if DHCP fails:
+# define static profile
+#profile static_eth0
+#static ip_address=192.168.1.23/24
+#static routers=192.168.1.1
+#static domain_name_servers=192.168.1.1
+
+# fallback to static profile on eth0
+#interface eth0
+#fallback static_eth0
+interface eth0
+static ip_address=192.168.2.48/24
+static routers= 192.168.2.1
+static domain_name_servers= 192.168.2.1, 8.8.8.8
+```
+
+## 라즈베리파이 서버 3개를 동시에 바꾸기
+
+이번에는 라즈베리파이 서버 3개를 동시에 바꿔 보도록하겠습니다. 우선 앞의 내용을 참고해서, `one.local`,`two.local`,`three.local`으로 , 이제 라즈베리 서버 3개에 os를 잘 설치했으면, 연결이 잘 되는지 테스트 해봅시다.
 
 ```bash
 ansible all -m ping  --ask-pass --user=pi --inventory 'one.local,two.local,three.local,'
