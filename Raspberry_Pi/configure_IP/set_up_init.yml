@@ -1,0 +1,33 @@
+---
+- hosts: all
+  user: all
+  tasks:
+    - name: del ssh-keygen with IP
+      connection: local
+      shell: 'ssh-keygen -R {{ ansible_eth0.ipv4.address }}'
+      ignore_errors: yes # 복잡한 글이 나오는데 이걸 error로 안 여긴다!
+      run_once: true
+    - name: del ssh-keygen with hostname
+      connection: local
+      shell: 'ssh-keygen -R {{ ansible_hostname }}'
+      ignore_errors: yes # 복잡한 글이 나오는데 이걸 error로 안 여긴다!
+      run_once: true
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        upgrade: "yes" # not: yes
+        update_cache: yes
+        cache_valid_time: 86400 #One day
+    - name: ensure network-manager is at the latest version
+      become: true
+      apt: name=network-manager state=latest
+    - debug: var=hostvars[inventory_hostname]['ansible_default_ipv4']['address']
+    - name: NIC configuration
+      become: true
+      shell: 'nmcli con mod "Wired connection 1" ipv4.address {{ ansible_default_ipv4.address }}/24 ipv4.gateway {{ ansible_default_ipv4.gateway }} ipv4.dns "8.8.8.8 203.232.224.2" ipv4.method manual'
+    - name: NIC autoconnect
+      become: true
+      shell: nmcli con mod "Wired connection 1" connection.autoconnect yes
+    - name: NIC up
+      become: true
+      shell: nmcli con up "Wired connection 1"
