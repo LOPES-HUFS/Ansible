@@ -607,7 +607,7 @@ slaac private
 interface eth0
 static ip_address=192.168.0.14/24
 static routers= 192.168.0.1
-static domain_name_servers= 192.168.0.1, 8.8.8.8
+static domain_name_servers= 192.168.0.1 8.8.8.8
 one | CHANGED | rc=0 >>
 # A sample configuration for dhcpcd.
 # See dhcpcd.conf(5) for details.
@@ -671,7 +671,7 @@ slaac private
 interface eth0
 static ip_address=192.168.0.17/24
 static routers= 192.168.0.1
-static domain_name_servers= 192.168.0.1, 8.8.8.8
+static domain_name_servers= 192.168.0.1 8.8.8.8
 two | CHANGED | rc=0 >>
 # A sample configuration for dhcpcd.
 # See dhcpcd.conf(5) for details.
@@ -735,7 +735,7 @@ slaac private
 interface eth0
 static ip_address=192.168.0.19/24
 static routers= 192.168.0.1
-static domain_name_servers= 192.168.0.1, 8.8.8.8
+static domain_name_servers= 192.168.0.1 8.8.8.8
 ```
 
 아주 잘 변경되었습니다.
@@ -743,5 +743,3 @@ static domain_name_servers= 192.168.0.1, 8.8.8.8
 ## `set_up_init.yml`
 
 이 파일은 아래와 같은 이름으로 라즈베리파이 2개를 현재 자신이 가지고 있는 IP를 고정 IP로 변경한 다음, 이것으로 자동적으로 연결하게 설정한다.
-
-- [ansible.builtin.debug – Print statements during execution — Ansible Documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/debug_module.html)
