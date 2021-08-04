@@ -265,7 +265,7 @@ TASK [Configure static IP in  /etc/dhcpcd.conf] ********************************
 changed: [raspberrypi] => (item={'regexp': '^interface eth[0-9]$', 'line': 'interface eth0'})
 changed: [raspberrypi] => (item={'regexp': '^static ip_address', 'line': 'static ip_address=192.168.2.48/24'})
 changed: [raspberrypi] => (item={'regexp': '^static routers', 'line': 'static routers= 192.168.2.1'})
-changed: [raspberrypi] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.2.1, 8.8.8.8'})
+changed: [raspberrypi] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.2.1 8.8.8.8'})
 
 PLAY RECAP ***********************************************************************************************************************************
 raspberrypi                : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
