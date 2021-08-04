@@ -1,0 +1,32 @@
+---
+- hosts: all
+  user: pi
+  tasks:
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400 #One day
+
+- hosts: one
+  user: all
+  tasks:
+    - name: ensure nginx is at the latest version
+      become: true
+      apt: name=nginx state=latest
+    - name: start nginx
+      service:
+          name: nginx
+          state: started
+
+- hosts: two
+  user: all
+  tasks:
+    - name: ensure mariadb-server is at the latest version
+      become: true
+      apt: name=mariadb-server state=latest
+    - name: start mariadb-server
+      service:
+          name: mariadb-server
+          state: started
