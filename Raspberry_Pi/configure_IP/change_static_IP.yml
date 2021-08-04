@@ -18,5 +18,4 @@
         - { regexp: "^interface eth[0-9]$", line: "interface {{ interface }}" }
         - { regexp: "^static ip_address", line: "static ip_address={{ ipaddress }}/24" }
         - { regexp: "^static routers", line: "static routers={{ gateway }}" }
-        - { regexp: "^static domain_name_servers", line: "static domain_name_servers={{ gateway }}, {{ dns_servers }}" }
- 
+        - { regexp: "^static domain_name_servers", line: "static domain_name_servers={{ gateway }} {{ dns_servers }}" }

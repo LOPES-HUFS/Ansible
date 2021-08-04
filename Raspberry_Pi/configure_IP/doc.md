@@ -494,9 +494,9 @@ changed: [one] => (item={'regexp': '^static ip_address', 'line': 'static ip_addr
 changed: [one] => (item={'regexp': '^static routers', 'line': 'static routers= 192.168.0.1'})
 changed: [three] => (item={'regexp': '^static routers', 'line': 'static routers= 192.168.0.1'})
 changed: [two] => (item={'regexp': '^static routers', 'line': 'static routers= 192.168.0.1'})
-changed: [three] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.0.1, 8.8.8.8'})
-changed: [one] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.0.1, 8.8.8.8'})
-changed: [two] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.0.1, 8.8.8.8'})
+changed: [three] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.0.1 8.8.8.8'})
+changed: [one] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.0.1 8.8.8.8'})
+changed: [two] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.0.1 8.8.8.8'})
 
 PLAY RECAP ***********************************************************************************************************************************
 one                        : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
@@ -739,3 +739,9 @@ static domain_name_servers= 192.168.0.1, 8.8.8.8
 ```
 
 아주 잘 변경되었습니다.
+
+## `set_up_init.yml`
+
+이 파일은 아래와 같은 이름으로 라즈베리파이 2개를 현재 자신이 가지고 있는 IP를 고정 IP로 변경한 다음, 이것으로 자동적으로 연결하게 설정한다.
+
+- [ansible.builtin.debug – Print statements during execution — Ansible Documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/debug_module.html)
