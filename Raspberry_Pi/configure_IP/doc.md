@@ -377,9 +377,9 @@ static routers= 192.168.2.1
 static domain_name_servers= 192.168.2.1, 8.8.8.8
 ```
 
-## 라즈베리파이 서버 3개를 동시에 바꾸기
+## 라즈베리파이 서버 3개의 IP를 동시에 바꾸기
 
-이번에는 라즈베리파이 서버 3개를 동시에 바꿔 보도록하겠습니다. 우선 앞의 내용을 참고해서, `one.local`,`two.local`,`three.local`으로 , 이제 라즈베리 서버 3개에 os를 잘 설치했으면, 연결이 잘 되는지 테스트 해봅시다.
+이번에는 라즈베리파이 서버 3개를 동시에 바꿔 보도록 하겠습니다. 우선 앞의 내용을 참고해서, `one.local`,`two.local`,`three.local`으로 , 이제 라즈베리 서버 3개에 os를 잘 설치했으면, 연결이 잘 되는지 테스트 해봅시다.
 
 ```bash
 ansible all -m ping  --ask-pass --user=pi --inventory 'one.local,two.local,three.local,'
@@ -466,17 +466,276 @@ three | SUCCESS => {
 }
 ```
 
-이제 서버 3개를 설정이 다 잘 되었습니다.
+이제 서버 3개를 설정이 다 잘 되었습니다. 서버 3개를 모두 고정 IP로 바꿔 보도록 하겠습니다. 서버 한 개를 바꾼 것과 동일하게 하면 되는데, 단지 서버 3개의 정보가 들어간 `hosts.yml`을 사용하는 것만 다릅니다.
 
-## `set_up_init.yml`
-
-이 파일은 아래와 같은 이름으로 라즈베리파이 2개를 현재 자신이 가지고 있는 IP를 고정 IP로 변경한 다음, 이것으로 자동적으로 연결하게 설정한다.
-
-```ini
-[all]
-1.local
-2.local
+```bash
+ansible-playbook change_static_IP.yml -i hosts.yml
 ```
 
+실행결과는 다음과 같습니다.
 
-- [ansible.builtin.debug – Print statements during execution — Ansible Documentation](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/debug_module.html)
+``` bash
+❯ ansible-playbook change_static_IP.yml -i hosts.yml
+
+PLAY [all] ***********************************************************************************************************************************
+
+TASK [Gathering Facts] ***********************************************************************************************************************
+ok: [three]
+ok: [two]
+ok: [one]
+
+TASK [Configure static IP in  /etc/dhcpcd.conf] **********************************************************************************************
+changed: [one] => (item={'regexp': '^interface eth[0-9]$', 'line': 'interface eth0'})
+changed: [two] => (item={'regexp': '^interface eth[0-9]$', 'line': 'interface eth0'})
+changed: [three] => (item={'regexp': '^interface eth[0-9]$', 'line': 'interface eth0'})
+changed: [two] => (item={'regexp': '^static ip_address', 'line': 'static ip_address=192.168.0.19/24'})
+changed: [three] => (item={'regexp': '^static ip_address', 'line': 'static ip_address=192.168.0.14/24'})
+changed: [one] => (item={'regexp': '^static ip_address', 'line': 'static ip_address=192.168.0.17/24'})
+changed: [one] => (item={'regexp': '^static routers', 'line': 'static routers= 192.168.0.1'})
+changed: [three] => (item={'regexp': '^static routers', 'line': 'static routers= 192.168.0.1'})
+changed: [two] => (item={'regexp': '^static routers', 'line': 'static routers= 192.168.0.1'})
+changed: [three] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.0.1, 8.8.8.8'})
+changed: [one] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.0.1, 8.8.8.8'})
+changed: [two] => (item={'regexp': '^static domain_name_servers', 'line': 'static domain_name_servers= 192.168.0.1, 8.8.8.8'})
+
+PLAY RECAP ***********************************************************************************************************************************
+one                        : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+three                      : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+two                        : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+```
+
+서버를 모두 다음과 같은 명령으로 리부팅합니다.
+
+```bash
+ansible all -a 'sudo shutdown -r now' -i hosts.yml
+```
+
+서버가 리부팅한 다음 서버에 다음과 같이 `ping`을 하면 잘 작동하고 있는 것을 확인하실 수 있습니다.
+
+```bash
+❯ ansible all -m ping -i hosts.yml
+one | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+three | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+two | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+```
+
+서버 IP도 확인해봅시다.
+
+```bash
+❯ ansible all -a 'hostname -I' -i hosts.yml
+two | CHANGED | rc=0 >>
+192.168.0.19 fd39:4db0:5c99::4eb fd39:4db0:5c99:0:2e75:e0a4:ed51:50f0 
+one | CHANGED | rc=0 >>
+192.168.0.17 fd39:4db0:5c99::fd5 fd39:4db0:5c99:0:d3da:e201:6743:1b6e 
+three | CHANGED | rc=0 >>
+192.168.0.14 fd39:4db0:5c99::716 fd39:4db0:5c99:0:4809:d0ee:975d:843e 
+```
+
+`dhcpcd.conf`파일도 다 변경되었는지 확인해 봅시다.
+
+```bash
+❯ ansible all -a 'cat /etc/dhcpcd.conf' -i hosts.yml
+three | CHANGED | rc=0 >>
+# A sample configuration for dhcpcd.
+# See dhcpcd.conf(5) for details.
+
+# Allow users of this group to interact with dhcpcd via the control socket.
+#controlgroup wheel
+
+# Inform the DHCP server of our hostname for DDNS.
+hostname
+
+# Use the hardware address of the interface for the Client ID.
+clientid
+# or
+# Use the same DUID + IAID as set in DHCPv6 for DHCPv4 ClientID as per RFC4361.
+# Some non-RFC compliant DHCP servers do not reply with this set.
+# In this case, comment out duid and enable clientid above.
+#duid
+
+# Persist interface configuration when dhcpcd exits.
+persistent
+
+# Rapid commit support.
+# Safe to enable by default because it requires the equivalent option set
+# on the server to actually work.
+option rapid_commit
+
+# A list of options to request from the DHCP server.
+option domain_name_servers, domain_name, domain_search, host_name
+option classless_static_routes
+# Respect the network MTU. This is applied to DHCP routes.
+option interface_mtu
+
+# Most distributions have NTP support.
+#option ntp_servers
+
+# A ServerID is required by RFC2131.
+require dhcp_server_identifier
+
+# Generate SLAAC address using the Hardware Address of the interface
+#slaac hwaddr
+# OR generate Stable Private IPv6 Addresses based from the DUID
+slaac private
+
+# Example static IP configuration:
+#interface eth0
+#static ip_address=192.168.0.10/24
+#static ip6_address=fd51:42f8:caae:d92e::ff/64
+#static routers=192.168.0.1
+#static domain_name_servers=192.168.0.1 8.8.8.8 fd51:42f8:caae:d92e::1
+
+# It is possible to fall back to a static IP if DHCP fails:
+# define static profile
+#profile static_eth0
+#static ip_address=192.168.1.23/24
+#static routers=192.168.1.1
+#static domain_name_servers=192.168.1.1
+
+# fallback to static profile on eth0
+#interface eth0
+#fallback static_eth0
+interface eth0
+static ip_address=192.168.0.14/24
+static routers= 192.168.0.1
+static domain_name_servers= 192.168.0.1, 8.8.8.8
+one | CHANGED | rc=0 >>
+# A sample configuration for dhcpcd.
+# See dhcpcd.conf(5) for details.
+
+# Allow users of this group to interact with dhcpcd via the control socket.
+#controlgroup wheel
+
+# Inform the DHCP server of our hostname for DDNS.
+hostname
+
+# Use the hardware address of the interface for the Client ID.
+clientid
+# or
+# Use the same DUID + IAID as set in DHCPv6 for DHCPv4 ClientID as per RFC4361.
+# Some non-RFC compliant DHCP servers do not reply with this set.
+# In this case, comment out duid and enable clientid above.
+#duid
+
+# Persist interface configuration when dhcpcd exits.
+persistent
+
+# Rapid commit support.
+# Safe to enable by default because it requires the equivalent option set
+# on the server to actually work.
+option rapid_commit
+
+# A list of options to request from the DHCP server.
+option domain_name_servers, domain_name, domain_search, host_name
+option classless_static_routes
+# Respect the network MTU. This is applied to DHCP routes.
+option interface_mtu
+
+# Most distributions have NTP support.
+#option ntp_servers
+
+# A ServerID is required by RFC2131.
+require dhcp_server_identifier
+
+# Generate SLAAC address using the Hardware Address of the interface
+#slaac hwaddr
+# OR generate Stable Private IPv6 Addresses based from the DUID
+slaac private
+
+# Example static IP configuration:
+#interface eth0
+#static ip_address=192.168.0.10/24
+#static ip6_address=fd51:42f8:caae:d92e::ff/64
+#static routers=192.168.0.1
+#static domain_name_servers=192.168.0.1 8.8.8.8 fd51:42f8:caae:d92e::1
+
+# It is possible to fall back to a static IP if DHCP fails:
+# define static profile
+#profile static_eth0
+#static ip_address=192.168.1.23/24
+#static routers=192.168.1.1
+#static domain_name_servers=192.168.1.1
+
+# fallback to static profile on eth0
+#interface eth0
+#fallback static_eth0
+interface eth0
+static ip_address=192.168.0.17/24
+static routers= 192.168.0.1
+static domain_name_servers= 192.168.0.1, 8.8.8.8
+two | CHANGED | rc=0 >>
+# A sample configuration for dhcpcd.
+# See dhcpcd.conf(5) for details.
+
+# Allow users of this group to interact with dhcpcd via the control socket.
+#controlgroup wheel
+
+# Inform the DHCP server of our hostname for DDNS.
+hostname
+
+# Use the hardware address of the interface for the Client ID.
+clientid
+# or
+# Use the same DUID + IAID as set in DHCPv6 for DHCPv4 ClientID as per RFC4361.
+# Some non-RFC compliant DHCP servers do not reply with this set.
+# In this case, comment out duid and enable clientid above.
+#duid
+
+# Persist interface configuration when dhcpcd exits.
+persistent
+
+# Rapid commit support.
+# Safe to enable by default because it requires the equivalent option set
+# on the server to actually work.
+option rapid_commit
+
+# A list of options to request from the DHCP server.
+option domain_name_servers, domain_name, domain_search, host_name
+option classless_static_routes
+# Respect the network MTU. This is applied to DHCP routes.
+option interface_mtu
+
+# Most distributions have NTP support.
+#option ntp_servers
+
+# A ServerID is required by RFC2131.
+require dhcp_server_identifier
+
+# Generate SLAAC address using the Hardware Address of the interface
+#slaac hwaddr
+# OR generate Stable Private IPv6 Addresses based from the DUID
+slaac private
+
+# Example static IP configuration:
+#interface eth0
+#static ip_address=192.168.0.10/24
+#static ip6_address=fd51:42f8:caae:d92e::ff/64
+#static routers=192.168.0.1
+#static domain_name_servers=192.168.0.1 8.8.8.8 fd51:42f8:caae:d92e::1
+
+# It is possible to fall back to a static IP if DHCP fails:
+# define static profile
+#profile static_eth0
+#static ip_address=192.168.1.23/24
+#static routers=192.168.1.1
+#static domain_name_servers=192.168.1.1
+
+# fallback to static profile on eth0
+#interface eth0
+#fallback static_eth0
+interface eth0
+static ip_address=192.168.0.19/24
+static routers= 192.168.0.1
+static domain_name_servers= 192.168.0.1, 8.8.8.8
+```
+
+아주 잘 변경되었습니다.
