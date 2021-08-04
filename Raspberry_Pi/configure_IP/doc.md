@@ -217,7 +217,7 @@ raspberrypi                : ok=4    changed=0    unreachable=0    failed=0    s
 - [[Ansible] 설정파일 라인 변경](https://sh-safer.tistory.com/127)
 - [ansible-pi-lockdown/main.yml at master · vicchi/ansible-pi-lockdown](https://github.com/vicchi/ansible-pi-lockdown/blob/master/roles/static-ip/tasks/main.yml)
 
-아래 코드를 `change_static_IP.yml`이라는 파일을 만들고 저장합니다. 이 코드는 현재 `raspberrypi.local` 서버가 사용하고 있는 
+아래 코드를 `change_static_IP.yml`이라는 파일을 만들고 저장합니다. 이 코드는 현재 `raspberrypi.local` 서버가 고정 IP를 갖도록 `/etc/dhcpcd.conf` 파일을 변경하는 기능을 합니다.
 
 ```yaml
 ---
@@ -240,7 +240,7 @@ raspberrypi                : ok=4    changed=0    unreachable=0    failed=0    s
         - { regexp: "^interface eth[0-9]$", line: "interface {{ interface }}" }
         - { regexp: "^static ip_address", line: "static ip_address={{ ipaddress }}/24" }
         - { regexp: "^static routers", line: "static routers={{ gateway }}" }
-        - { regexp: "^static domain_name_servers", line: "static domain_name_servers={{ gateway }}, {{ dns_servers }}" }
+        - { regexp: "^static domain_name_servers", line: "static domain_name_servers={{ gateway }} {{ dns_servers }}" }
 
 ```
 
